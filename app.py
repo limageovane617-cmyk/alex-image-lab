@@ -1,79 +1,166 @@
-from flask import Flask
+from flask import Flask, request, render_template_string
 import os
+import base64
 
 app = Flask(__name__)
 
 
-@app.route("/")
-def inicio():
-    return """
-    <!DOCTYPE html>
-    <html lang="pt-BR">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Alex Image Lab</title>
+HTML = """
+<!DOCTYPE html>
+<html lang="pt-BR">
 
-        <style>
-            body {
-                font-family: Arial, sans-serif;
-                text-align: center;
-                padding: 50px 20px;
-                background: #111827;
-                color: white;
-            }
+<head>
+    <meta charset="UTF-8">
 
-            .caixa {
-                max-width: 600px;
-                margin: auto;
-                padding: 30px;
-                border-radius: 20px;
-                background: #1f2937;
-            }
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
 
-            h1 {
-                font-size: 32px;
-            }
+    <title>Alex Image Lab</title>
 
-            p {
-                font-size: 18px;
-                color: #d1d5db;
-            }
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 30px 15px;
+            background: #111827;
+            color: white;
+        }
 
-            .status {
-                margin-top: 25px;
-                padding: 15px;
-                border-radius: 12px;
-                background: #065f46;
-            }
-        </style>
-    </head>
+        .caixa {
+            max-width: 650px;
+            margin: auto;
+            padding: 25px;
+            border-radius: 20px;
+            background: #1f2937;
+        }
 
-    <body>
-        <div class="caixa">
+        h1 {
+            font-size: 30px;
+        }
 
-            <h1>🎨 Alex Image Lab</h1>
+        p {
+            color: #d1d5db;
+        }
 
-            <p>
-                Laboratório de desenvolvimento de motores de IA
-            </p>
+        input[type="file"] {
+            margin: 20px 0;
+            width: 100%;
+        }
 
-            <div class="status">
-                🟢 Sistema iniciado com sucesso!
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .imagem {
+            max-width: 100%;
+            margin-top: 25px;
+            border-radius: 15px;
+        }
+
+        .sucesso {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 12px;
+            background: #065f46;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="caixa">
+
+        <h1>🎨 Alex Image Lab</h1>
+
+        <p>
+            Laboratório de desenvolvimento de motores de IA
+        </p>
+
+        <hr>
+
+        <h2>📷 Teste de imagem</h2>
+
+        <form method="POST"
+              enctype="multipart/form-data">
+
+            <input
+                type="file"
+                name="imagem"
+                accept="image/*"
+                required
+            >
+
+            <br>
+
+            <button type="submit">
+                🖼️ Carregar imagem
+            </button>
+
+        </form>
+
+        {% if imagem %}
+
+            <div class="sucesso">
+                🟢 Imagem recebida com sucesso!
             </div>
 
-            <p>
-                🤖 Alex Image Lab está online.
-            </p>
+            <img
+                class="imagem"
+                src="data:{{ tipo }};base64,{{ imagem }}"
+            >
 
-        </div>
-    </body>
-    </html>
-    """
+        {% endif %}
+
+    </div>
+
+</body>
+
+</html>
+"""
+
+
+@app.route("/", methods=["GET", "POST"])
+def inicio():
+
+    imagem = None
+    tipo = None
+
+    if request.method == "POST":
+
+        arquivo = request.files.get("imagem")
+
+        if arquivo and arquivo.filename:
+
+            dados = arquivo.read()
+
+            imagem = base64.b64encode(
+                dados
+            ).decode("utf-8")
+
+            tipo = (
+                arquivo.mimetype
+                or "image/jpeg"
+            )
+
+    return render_template_string(
+        HTML,
+        imagem=imagem,
+        tipo=tipo
+    )
 
 
 if __name__ == "__main__":
-    porta = int(os.environ.get("PORT", 10000))
+
+    porta = int(
+        os.environ.get(
+            "PORT",
+            10000
+        )
+    )
 
     app.run(
         host="0.0.0.0",
